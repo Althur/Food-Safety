@@ -1,0 +1,58 @@
+pragma solidity >=0.4.22 <0.6.0;
+
+contract Food_Safety {
+    
+        uint producedData;
+        uint transporter_received;
+        uint transporter_delivered;
+        uint supermarket_recieved;
+        string public status;
+        
+        function producer(uint x, string memory _status) public {
+            
+            producedData = x;
+            
+            status = _status;
+        }
+    
+        function get_producer() public view returns (uint, string memory _status) {
+            
+            return producedData;
+            return status;
+        }
+        
+        function transporter (uint x, uint y, string memory _status) public {
+            
+            transporter_received= x;
+            transporter_delivered = y; 
+            status = _status;
+        
+        }
+            
+        function get_transporter_rec() public view returns (uint, string memory _status) {
+            
+            return transporter_received;
+            return transporter_delivered;
+            return status;
+        
+        }
+            
+        function supermarket(uint x, string memory _status ) public {
+            
+            supermarket_recieved = x;
+            status = _status;
+
+        }
+        
+        function get_supermkt() public view returns (uint, string memory _status) {
+            
+       
+             return supermarket_recieved;
+             return status;
+        }
+        
+        function stats() public view returns (string memory _status) {
+            
+             return status;
+        }
+}        
