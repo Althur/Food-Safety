@@ -1,0 +1,171 @@
+
+import json
+from web3 import Web3
+
+ganache_url = 'HTTP://127.0.0.1:7545'
+
+web3 = Web3(Web3.HTTPProvider(ganache_url))
+
+infura_url = "https://mainnet.infura.io/v3/39e69709699f40dfae8a67e99f1db2d0"
+
+#print(web3.isConnected())
+
+#print(web3.eth.blockNumber)
+
+# contract info 
+abi = json.loads('[{"constant":false,"inputs":[{"internalType":"address","name":"to","type":"address"}],"name":"delegate","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"winningProposal","outputs":[{"internalType":"uint8","name":"_winningProposal","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"toVoter","type":"address"}],"name":"giveRightToVote","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"uint8","name":"toProposal","type":"uint8"}],"name":"vote","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint8","name":"_numProposals","type":"uint8"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"}]')
+
+address = web3.toChecksumAddress('0xeda72513b1763ddd30ae11e0c94db1693d74d5fe')
+
+contract = web3.eth.contract(address = address, abi = abi)
+
+
+
+# accounts 
+
+producer_account = "0xCA86C62AFdc5A3040DCb023eB455e417c8Bed5d4"
+
+transporter_account = "0xD39F156F1eE672d89Cbea2977A00e8aa59ee643f"
+
+supermarket_account = "0xDF5751c6A1DC16d227491A7F491a7a95e80394a4"
+
+# private Keys 
+
+
+producer_private_key = "f6279ef59dd312e11a57c14c6bc4533db19a616d7ecc294504b138022f6072b4"
+
+transporter_private_key = "58240e57c4c8dfbdf5c2c9d220c1b1a616785cc4093de5ad8da91497f9b26f81"
+
+supermarket_private_key = "d065c5aae3542804f5d30931693ce30b6310141a1d5304ec2b68f2cb631a4e01"
+
+
+# action variables 
+
+producer_produced = "ok" #comida foi produzida
+
+producer_delivered = "ok" # produtor diz que comida foi entregue ao transportador
+
+transporter_received = "ok" # transportador confirma que recebeu alimento
+
+transporter_delivered = "ok" # transportador diz que entregou alimento ao supermercado
+
+supermarket_received = "ok" # supermercado confirma que recebeu alimento 
+
+
+
+
+# food tracker 
+count = 0
+while count < 5: 
+    
+    if producer_produced == 'ok':
+        print(True)
+    #write on contract
+        producer_hash = contract.functions.producer(1, "P produced").transact
+        web3.eth.waitForTransactionReceipt(producer_hash)
+        count +=1
+        
+    if producer_delivered == 'ok': 
+        print(True)
+
+        # write on contract
+        producerD_hash = contract.functions.producer(2, "P delivered").transact
+        web3.eth.waitForTransactionReceipt(producerD_hash)
+        
+        p_nonce = web3.eth.getTransactionCount(producer_account)
+        
+        producer_transaction = { 
+      'nonce': p_nonce,
+      'to': transporter_account,
+      'value':web3.toWei(1,'ether'),
+      'gas':1000000,
+      'gasPrice': web3.toWei('50', 'gwei')
+      }
+        # send 1 eth
+        signed_producer_transaction = web3.eth.account.signTransaction(producer_transaction, producer_private_key)
+        P_transaction_hash = web3.toHex(web3.eth.sendRawTransaction(signed_producer_transaction.rawTransaction))
+        
+        count+=1
+
+
+        if transporter_received =='ok':
+            print(True)
+            
+                        #write on contract
+                        
+            transporterR_hash = contract.functions.transporter(1, "T received").transact
+            web3.eth.waitForTransactionReceipt(transporterR_hash)
+
+            t_p_nonce = web3.eth.getTransactionCount(transporter_account)
+        
+            t_to_p_transaction = { 
+      'nonce': t_p_nonce,
+      'to': producer_account,
+      'value':web3.toWei(1,'ether'),
+      'gas':1000000,
+      'gasPrice': web3.toWei('50', 'gwei')
+              }
+                    # send 1 eth
+
+            signed_t_to_p_transaction = web3.eth.account.signTransaction(transporter_account, transporter_private_key)
+            transaction_hash = web3.toHex(web3.eth.sendRawTransaction(signed_producer_transaction.rawTransaction))
+            count+=1 
+            
+            if transporter_delivered =='ok':
+                print(True)
+                 #write on contract 
+                transporterD_hash = contract.functions.transporter(2, "T delivered").transact
+                web3.eth.waitForTransactionReceipt(transporterD_hash)
+                #send 1 eth to super 
+    
+                t_mkt_nonce = web3.eth.getTransactionCount(transporter_account)
+        
+                t_to_mkt_transaction = { 
+      'nonce': t_mkt_nonce,
+      'to': supermarket_account,
+      'value':web3.toWei(1,'ether'),
+      'gas':1000000,
+      'gasPrice': web3.toWei('50', 'gwei')
+              }
+                    # send 1 eth
+
+                signed_t_to_mkt_transaction = web3.eth.account.signTransaction(transporter_account, transporter_private_key)
+                T_to_mkt_transaction_hash = web3.toHex(web3.eth.sendRawTransaction(signed_t_to_mkt_transaction.rawTransaction))
+                count+=1
+                
+                if supermarket_received == 'ok':
+                    print(True)
+                    #write on contract
+                    supermarketR_hash = contract.functions.superarket(1, "Mkt received").transact
+                    web3.eth.waitForTransactionReceipt(supermarketR_hash)
+
+                    #send eth to mkt
+                    mkt_to_T_nonce = web3.eth.getTransactionCount(supermarket_account)
+        
+                    mkt_to_T_transaction = { 
+      'nonce': mkt_to_T_nonce,
+      'to': transporter_account,
+      'value':web3.toWei(1,'ether'),
+      'gas':1000000,
+      'gasPrice': web3.toWei('50', 'gwei')
+              }
+                    # send 1 eth
+
+                    signed_mkt_to_T_transaction = web3.eth.account.signTransaction(supermarket_account, supermarket_private_key)
+                    mkt_to_T_transaction_hash = web3.toHex(web3.eth.sendRawTransaction(signed_mkt_to_T_transaction.rawTransaction))
+                    count+=1
+                
+                else:
+                    
+                    print(False)
+            else:
+                
+                print(False)
+                
+        else:
+            
+            print(False)
+            
+    else: 
+        
+        print(False)
